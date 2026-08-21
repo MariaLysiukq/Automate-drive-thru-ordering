@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "drive-thru-validator"
+version = "0.1.0"
+description = "Validation engine for AI-driven drive-thru orders"
+authors = ["Maria Lysiuk <marialysiukq@gmail.com>"]
+readme = "README.md"
+packages = [{include = "order_processor.py"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
