@@ -1,22 +1,29 @@
+from pathlib import Path
 from typing import Any
-
-# Умовна база даних меню ресторану
-MENU = {
-    "cheeseburger": {"price": 5.0, "available_options": ["no_onion", "extra_cheese"]},
-    "fries": {"price": 2.5, "available_options": ["large", "medium"]},
-    "coke": {"price": 1.5, "available_options": ["no_ice"]}
-}
+import yaml
+import requests
 
 class InvalidOrderError(Exception):
-    """Кастомний виняток для некоректних замовлень."""
     pass
 
-def process_order(order: dict[str, Any]) -> dict[str, Any]:
-    """
-    Перевіряє замовлення та розраховує підсумкову ціну.
-    """
+def load_menu(config_path: str = "menu.yaml") -> dict[str, Any]:
+    """Динамічно завантажує конфігурацію меню з YAML-файлу."""
+    path = Path(config_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Config file '{config_path}' not found.")
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+def send_to_pos_api(order_summary: dict[str, Any]) -> bool:
+    """Імітація відправки даних на зовнішній сервіс касового терміналу."""
+    response = requests.post("https://api.pos-system.com/v1/orders", json=order_summary, timeout=5)
+    return response.status_code == 201
+
+def process_order(order: dict[str, Any], config_path: str = "menu.yaml") -> dict[str, Any]:
+    menu = load_menu(config_path)
+
     if not isinstance(order, dict) or "items" not in order or not order["items"]:
-        raise InvalidOrderError("Замовлення порожнє або має некоректний формат.")
+        raise InvalidOrderError("Order payload is empty or malformed.")
 
     total_price = 0.0
     processed_items = []
@@ -26,30 +33,28 @@ def process_order(order: dict[str, Any]) -> dict[str, Any]:
         quantity = item.get("quantity", 1)
         options = item.get("options", [])
 
-        # Валідація наявності товару в меню
-        if name not in MENU:
-            raise InvalidOrderError(f"Товар '{name}' відсутній у меню.")
+        if name not in menu:
+            raise InvalidOrderError(f"Item '{name}' is not in the menu.")
 
-        # Валідація кількості
         if not isinstance(quantity, int) or quantity <= 0:
-            raise InvalidOrderError(f"Некоректна кількість для '{name}': {quantity}.")
+            raise InvalidOrderError(f"Invalid quantity for '{name}': {quantity}.")
 
-        # Валідація опцій/модифікаторів
         for option in options:
-            if option not in MENU[name]["available_options"]:
-                raise InvalidOrderError(f"Опція '{option}' недоступна для '{name}'.")
+            if option not in menu[name]["available_options"]:
+                raise InvalidOrderError(f"Option '{option}' is invalid for '{name}'.")
 
-        item_total = MENU[name]["price"] * quantity
-        total_price += item_total
+        item_subtotal = menu[name]["price"] * quantity
+        total_price += item_subtotal
+        processed_items.append({"name": name, "quantity": quantity, "subtotal": item_subtotal})
 
-        processed_items.append({
-            "name": name,
-            "quantity": quantity,
-            "subtotal": item_total
-        })
-
-    return {
+    summary = {
         "status": "success",
         "total_price": total_price,
         "item_count": len(processed_items)
     }
+
+    # Виклик зовнішнього API
+    if not send_to_pos_api(summary):
+        raise RuntimeError("POS System integration failed.")
+
+    return summary

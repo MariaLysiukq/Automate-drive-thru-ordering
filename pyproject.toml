@@ -8,6 +8,8 @@ packages = [{include = "order_processor.py"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+pyyaml = "^6.0.3"
+requests = "^2.34.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

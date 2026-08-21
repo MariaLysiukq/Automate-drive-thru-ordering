@@ -1,0 +1,14 @@
+cheeseburger:
+  price: 5.0
+  available_options:
+    - no_onion
+    - extra_cheese
+fries:
+  price: 2.5
+  available_options:
+    - large
+    - medium
+coke:
+  price: 1.5
+  available_options:
+    - no_ice

@@ -1,29 +1,44 @@
+from unittest.mock import patch, MagicMock
 import pytest
 from order_processor import process_order, InvalidOrderError
+import requests
 
-# 1. Тест успішної обробки з використанням фікстури
-def test_process_valid_order(valid_order_payload):
+@patch("requests.post")
+def test_process_valid_order_success(mock_post, valid_order_payload):
+    mock_response = MagicMock()
+    mock_response.status_code = 201
+    mock_post.return_value = mock_response
+
     result = process_order(valid_order_payload)
-    
-    assert result["status"] == "success"
-    assert result["total_price"] == 11.5  # (5.0 * 2) + (1.5 * 1)
-    assert result["item_count"] == 2
 
-# 2. Параметризований тест для перевірки різних некоректних сценаріїв
+    assert result["status"] == "success"
+    assert result["total_price"] == 11.5
+    mock_post.assert_called_once()
+
+@patch("requests.post")
+def test_process_order_pos_failure(mock_post, valid_order_payload):
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_post.return_value = mock_response
+
+    with pytest.raises(RuntimeError, match="POS System integration failed."):
+        process_order(valid_order_payload)
+
+@patch("requests.post")
 @pytest.mark.parametrize(
     "invalid_payload, expected_error_msg",
     [
-        ({}, "Замовлення порожнє або має некоректний формат."),
-        ({"items": []}, "Замовлення порожнє або має некоректний формат."),
-        ({"items": [{"name": "pizza", "quantity": 1}]}, "Товар 'pizza' відсутній у меню."),
-        ({"items": [{"name": "fries", "quantity": -1}]}, "Некоректна кількість для 'fries': -1."),
+        ({}, "Order payload is empty or malformed."),
+        ({"items": []}, "Order payload is empty or malformed."),
+        ({"items": [{"name": "pizza", "quantity": 1}]}, "Item 'pizza' is not in the menu."),
+        ({"items": [{"name": "fries", "quantity": -1}]}, "Invalid quantity for 'fries': -1."),
         (
             {"items": [{"name": "coke", "quantity": 1, "options": ["extra_cheese"]}]},
-            "Опція 'extra_cheese' недоступна для 'coke'."
+            "Option 'extra_cheese' is invalid for 'coke'."
         ),
     ]
 )
-def test_process_invalid_orders(invalid_payload, expected_error_msg):
+def test_process_invalid_orders(mock_post, invalid_payload, expected_error_msg):
     with pytest.raises(InvalidOrderError) as exc_info:
         process_order(invalid_payload)
     

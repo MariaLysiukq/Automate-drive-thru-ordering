@@ -1,0 +1,33 @@
+name: Run Pytest Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install Dependencies
+        run: |
+          cd autotest-for-orders/drive_thru_validator
+          poetry install
+
+      - name: Run Pytest
+        run: |
+          cd autotest-for-orders/drive_thru_validator
+          poetry run pytest -v
