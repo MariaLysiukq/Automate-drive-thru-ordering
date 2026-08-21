@@ -9,10 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,11 +21,9 @@ jobs:
         run: pipx install poetry
 
       - name: Install Dependencies
-        run: |
-          cd autotest-for-orders/drive_thru_validator
-          poetry install
+        working-directory: drive_thru_validator
+        run: poetry install
 
       - name: Run Pytest
-        run: |
-          cd autotest-for-orders/drive_thru_validator
-          poetry run pytest -v
+        working-directory: drive_thru_validator
+        run: poetry run pytest -v
