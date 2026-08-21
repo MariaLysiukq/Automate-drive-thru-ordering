@@ -21,9 +21,7 @@ jobs:
         run: pipx install poetry
 
       - name: Install Dependencies
-        working-directory: drive_thru_validator
         run: poetry install
 
       - name: Run Pytest
-        working-directory: drive_thru_validator
         run: poetry run pytest -v
