@@ -28,14 +28,6 @@ poetry run pytest -v
 
 
 ---
-**Commands to Commit the Changes**
-
-```bash
-git add README.md
-git commit -m "docs: update README with setup guide and CI badge"
-git push
-
-
 **Architecture 
  order_processor.py — The heart of the project. Loads the menu configuration, validates the order payload (availability of items, permitted options, quantity $>0$), calculates the total price and sends an HTTP POST request to an external POS system. 
  
