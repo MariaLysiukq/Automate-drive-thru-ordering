@@ -59,3 +59,7 @@ The current code sends a summary to a fixed example URL: `https://api.pos-system
 │   └── test_order_processor.py
 └── pyproject.toml
 ```
+
+## License
+
+[MIT](LICENSE)
